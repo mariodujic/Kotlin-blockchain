@@ -1,6 +1,11 @@
+package blockchain
+
+import transaction.TransactionOutput
+
 class Blockchain {
 
     private val blocks: MutableList<Block> = mutableListOf()
+    var UTXO: MutableMap<String, TransactionOutput> = mutableMapOf()
 
     fun add(block: Block) : Block {
         val minedBlock = if (isMined(block)) block else mine(block)
@@ -8,7 +13,7 @@ class Blockchain {
         return minedBlock
     }
 
-    private val difficulty = 3
+    private val difficulty = 2
     private val validPrefix = "0".repeat(difficulty)
 
     private fun isMined(block: Block) : Boolean {
@@ -25,8 +30,14 @@ class Blockchain {
         }
 
         println("Mined : $minedBlock")
-
+        updateUTXO(minedBlock)
         return minedBlock
+    }
+
+    private fun updateUTXO(block: Block) {
+
+        block.transactions.flatMap { it.inputs }.map { it.hash }.forEach { UTXO.remove(it) }
+        UTXO.putAll(block.transactions.flatMap { it.outputs }.associateBy { it.hash })
     }
 
     fun isValid(): Boolean {
